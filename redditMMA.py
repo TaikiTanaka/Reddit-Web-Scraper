@@ -21,6 +21,9 @@ def getSubreddit(reddit):
 
 def getNumPosts():
     numPosts = input('How many posts would you like to search?\n')
+    if(numPosts.isalpha()):
+        if (str(numPosts).lower() == 'max'):
+            return 0;
     try:
         val = int(numPosts)
     except ValueError:
@@ -37,6 +40,36 @@ def generateCommon():
     #print(dictionaryList)
     return dictionaryList
 
+def generateWordMap(numPosts, subreddit):
+    count = 0
+    
+    wordMap = {}
+
+    if(numPosts == 0):
+        for posts in subreddit.hot(limit=None):
+            count+=1
+            parser = str(posts.title).split()
+            for word in parser:
+                if (word.upper() not in commonWords) and (word.isalpha() or "'" in word):
+                    wordMap.setdefault(word, 0)
+                    wordMap[word]+=1
+    else:
+        for posts in subreddit.hot(limit=numPosts):
+            count+=1
+            parser = str(posts.title).split()
+            for word in parser:
+                if (word.upper() not in commonWords) and (word.isalpha() or "'" in word):
+                    wordMap.setdefault(word, 0)
+                    wordMap[word]+=1
+    print('\n\n'+ 'Iterated through ' + str(count) +' posts\n\n')
+    
+    #Converting the dictionary into a LIST of tuples sorted according the frequency of the word
+    #itemgetter function simply grabs the value at the indicated index of the tuple
+    sortedWords = sorted(wordMap.items(), key=operator.itemgetter(1), reverse = True)
+    return sortedWords
+
+    
+
 #=============================MAIN===========================
 
 #Initializing the reddit object
@@ -44,21 +77,9 @@ reddit = praw.Reddit(client_id = 'F_gwC51M8pKYkQ',
                      client_secret = 'SNgPPPVz8uWKABOcGH5tNjreGyQ',
                      user_agent = '<pc>:<F_gwC51M8pKYkQ>:<V1.0> (by /u/<montyredditpython>)')
 
-mma = getSubreddit(reddit)
-words = {}
-commonWords = generateCommon()
-
-#reddit.subreddit takes a subreddit argument and returns 
+subreddit = getSubreddit(reddit)
 numPosts = getNumPosts()
-for posts in mma.hot(limit=numPosts):
-    #print(type(posts))
-    parser = str(posts.title).split()
-    for word in parser:
-        if (word.upper() not in commonWords) and (word.isalpha() or "'" in word):
-            words.setdefault(word, 0)
-            words[word]+=1
+commonWords = generateCommon()
+wordMap = generateWordMap(numPosts,subreddit)
 
-#Converting the dictionary into a list of tuples
-#itemgetter function simply grabs the value at the indicated index of the tuple
-sortedWords = sorted(words.items(), key=operator.itemgetter(1), reverse = True)
-print('\n\n' + sortedString(sortedWords))
+print(sortedString(wordMap))
